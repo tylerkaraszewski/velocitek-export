@@ -24,7 +24,7 @@ BAUDRATE = 115200
 
 # Post-RTS settle delays from VTConnection.m:745,755 — the device is slow to
 # notice RTS transitions and needs this breathing room or it'll miss bytes.
-RTS_SET_DELAY_S = 0.050
+RTS_SET_DELAY_S = 0.150
 RTS_CLEAR_DELAY_S = 0.500
 
 
