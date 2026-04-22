@@ -63,6 +63,14 @@ The CLI is interactive. It will:
    which to export, and ask for an output filename (defaults to
    `track-YYYYMMDD-HHMMSS.gpx`).
 
+### Quick export
+
+    ./velocitek_cli.py --newest
+
+Non-interactive shortcut: uses the first detected device, exports its
+newest track to `track-YYYYMMDD-HHMMSS.gpx` in the current directory, prints
+the track name and a success or error message, and exits.
+
 ## Supported hardware
 
 Tested on: SpeedPuck.

@@ -75,6 +75,22 @@ def cmd_list_logs(conn):
         )
 
 
+def _gpx_paths(log):
+    """Default output filename and GPX track name for a log."""
+    return (
+        f"track-{log.start:%Y%m%d-%H%M%S}.gpx",
+        f"Velocitek {log.start:%Y-%m-%d %H:%M} UTC",
+    )
+
+
+def export_log(conn, log, path, on_progress=None):
+    """Download `log` and write it to `path` as GPX. Returns (name, points, written)."""
+    _, name = _gpx_paths(log)
+    points = conn.download_trackpoints(log.start, log.end, on_progress=on_progress)
+    written = gpx.write_gpx(path, points, name=name)
+    return name, points, written
+
+
 def cmd_export_gpx(conn):
     logs = conn.list_trackpoint_logs()
     if not logs:
@@ -102,9 +118,8 @@ def cmd_export_gpx(conn):
         return
     log = logs_sorted[idx - 1]
 
-    default_name = f"track-{log.start:%Y%m%d-%H%M%S}.gpx"
-    path = prompt("Output path", default=default_name)
-    path = os.path.expanduser(path)
+    default_name, _ = _gpx_paths(log)
+    path = os.path.expanduser(prompt("Output path", default=default_name))
 
     expected = log.num_trackpoints
     print(f"  Downloading {expected} points from {log.start:%Y-%m-%d %H:%M:%S} UTC...")
@@ -119,7 +134,7 @@ def cmd_export_gpx(conn):
             print(f"\r    {count}/{expected} ({pct:5.1f}%)", end="", flush=True)
             last_print[0] = now
 
-    points = conn.download_trackpoints(log.start, log.end, on_progress=on_progress)
+    _, points, written = export_log(conn, log, path, on_progress=on_progress)
     print()  # newline after progress
     elapsed = time.monotonic() - start_t
     print(f"  Downloaded {len(points)} points in {elapsed:.1f}s.")
@@ -127,8 +142,6 @@ def cmd_export_gpx(conn):
     if len(points) != expected:
         print(f"  Warning: got {len(points)} points, expected {expected}.")
 
-    name = f"Velocitek {log.start:%Y-%m-%d %H:%M} UTC"
-    written = gpx.write_gpx(path, points, name=name)
     print(f"  Wrote {written} points to {path}")
 
 
@@ -169,16 +182,47 @@ def command_loop(connection: Connection):
             print(f"  Error: {exc!r}")
 
 
+def export_newest(conn) -> int:
+    logs = conn.list_trackpoint_logs()
+    if not logs:
+        print("Error: no logs on device.", file=sys.stderr)
+        return 1
+
+    log = max(logs, key=lambda l: l.start)
+    path, _ = _gpx_paths(log)
+
+    try:
+        name, _, written = export_log(conn, log, path)
+    except Exception as exc:
+        print(f"Error: {exc!r}", file=sys.stderr)
+        return 1
+
+    print(f"Track: {name}")
+    print(f"Success: wrote {written} points to {path}")
+    return 0
+
+
 def main() -> int:
-    descriptor = choose_device()
-    if descriptor is None:
-        return 0
+    newest = "--newest" in sys.argv[1:]
+
+    if newest:
+        devices = find_devices()
+        if not devices:
+            print("Error: no Velocitek devices found.", file=sys.stderr)
+            return 1
+        descriptor = devices[0][0]
+    else:
+        descriptor = choose_device()
+        if descriptor is None:
+            return 0
 
     model = PRODUCTS.get(descriptor.pid, "Unknown")
     print(f"\nConnecting to {model} (serial {descriptor.sn})...")
     try:
         with Connection(descriptor) as conn:
             print("Connected.")
+            if newest:
+                return export_newest(conn)
             command_loop(conn)
     except Exception as exc:
         print(f"Connection failed: {exc!r}", file=sys.stderr)
