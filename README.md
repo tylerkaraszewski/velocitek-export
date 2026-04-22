@@ -26,7 +26,7 @@ proprietary drivers are required.
 Plug the device in (unplug/replug it once after installing the udev rule so
 the new permissions take effect), then run:
 
-    ./velocitek_cli.py
+    ./velocitek
 
 ### macOS
 
@@ -43,7 +43,7 @@ the new permissions take effect), then run:
 
 Then:
 
-    ./velocitek_cli.py
+    ./velocitek
 
 Note: macOS has a built-in FTDI kernel driver (`AppleUSBFTDI`). The
 SpeedPuck/ProStart/SC1 use custom FTDI product IDs that the kernel driver
@@ -53,7 +53,11 @@ kernel driver (`sudo kextunload -b com.apple.driver.AppleUSBFTDI`).
 
 ## Usage
 
-    ./velocitek_cli.py
+    ./velocitek
+
+`./velocitek` is a thin shell wrapper that runs `velocitek_cli.py` under the
+repo's `.venv` — you don't need to activate the virtualenv first, and it
+doesn't modify your shell's environment. All arguments are passed through.
 
 The CLI is interactive. It will:
 
@@ -65,7 +69,7 @@ The CLI is interactive. It will:
 
 ### Quick export
 
-    ./velocitek_cli.py --newest
+    ./velocitek --newest
 
 Non-interactive shortcut: uses the first detected device, exports its
 newest track to `track-YYYYMMDD-HHMMSS.gpx` in the current directory, prints

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON="$DIR/.venv/bin/python"
+if [ ! -x "$PYTHON" ]; then
+    echo "velocitek: no virtualenv at $DIR/.venv — see README for setup" >&2
+    exit 1
+fi
+exec "$PYTHON" "$DIR/velocitek_cli.py" "$@"
