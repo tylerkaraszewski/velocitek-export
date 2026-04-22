@@ -91,6 +91,20 @@ def export_log(conn, log, path, on_progress=None):
     return name, points, written
 
 
+def _make_progress(expected):
+    """Progress callback that prints `count/expected (pct%)` over \\r at most every 0.5s."""
+    last_print = [0.0]
+
+    def on_progress(count):
+        now = time.monotonic()
+        if now - last_print[0] >= 0.5 or count == expected:
+            pct = (100.0 * count / expected) if expected else 0.0
+            print(f"\r    {count}/{expected} ({pct:5.1f}%)", end="", flush=True)
+            last_print[0] = now
+
+    return on_progress
+
+
 def cmd_export_gpx(conn):
     logs = conn.list_trackpoint_logs()
     if not logs:
@@ -125,16 +139,7 @@ def cmd_export_gpx(conn):
     print(f"  Downloading {expected} points from {log.start:%Y-%m-%d %H:%M:%S} UTC...")
 
     start_t = time.monotonic()
-    last_print = [0.0]
-
-    def on_progress(count):
-        now = time.monotonic()
-        if now - last_print[0] >= 0.5 or count == expected:
-            pct = (100.0 * count / expected) if expected else 0.0
-            print(f"\r    {count}/{expected} ({pct:5.1f}%)", end="", flush=True)
-            last_print[0] = now
-
-    _, points, written = export_log(conn, log, path, on_progress=on_progress)
+    _, points, written = export_log(conn, log, path, on_progress=_make_progress(expected))
     print()  # newline after progress
     elapsed = time.monotonic() - start_t
     print(f"  Downloaded {len(points)} points in {elapsed:.1f}s.")
@@ -189,15 +194,17 @@ def export_newest(conn) -> int:
         return 1
 
     log = max(logs, key=lambda l: l.start)
-    path, _ = _gpx_paths(log)
+    path, name = _gpx_paths(log)
+    print(f"Track: {name}")
 
     try:
-        name, _, written = export_log(conn, log, path)
+        _, _, written = export_log(conn, log, path, on_progress=_make_progress(log.num_trackpoints))
+        print()  # newline after progress
     except Exception as exc:
+        print()
         print(f"Error: {exc!r}", file=sys.stderr)
         return 1
 
-    print(f"Track: {name}")
     print(f"Success: wrote {written} points to {path}")
     return 0
 
