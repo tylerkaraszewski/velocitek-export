@@ -57,7 +57,7 @@ def choose_device():
         print(f"  (choose 1..{len(devices)})")
 
 
-def cmd_firmware_version(conn):
+def cmd_firmware_version(conn: Connection):
     print(f"  Firmware version: {conn.firmware_version()}")
 
 
@@ -83,7 +83,7 @@ def _gpx_paths(log):
     )
 
 
-def export_log(conn, log, path, on_progress=None):
+def export_log(conn: Connection, log, path, on_progress=None):
     """Download `log` and write it to `path` as GPX. Returns (name, points, written)."""
     _, name = _gpx_paths(log)
     points = conn.download_trackpoints(log.start, log.end, on_progress=on_progress)
@@ -95,7 +95,7 @@ def _make_progress(expected):
     """Progress callback that prints `count/expected (pct%)` over \\r at most every 0.5s."""
     last_print = [0.0]
 
-    def on_progress(count):
+    def on_progress(count: int):
         now = time.monotonic()
         if now - last_print[0] >= 0.5 or count == expected:
             pct = (100.0 * count / expected) if expected else 0.0
@@ -105,7 +105,7 @@ def _make_progress(expected):
     return on_progress
 
 
-def cmd_export_gpx(conn):
+def cmd_export_gpx(conn: Connection):
     logs = conn.list_trackpoint_logs()
     if not logs:
         print("  (no logs on device)")
@@ -187,7 +187,7 @@ def command_loop(connection: Connection):
             print(f"  Error: {exc!r}")
 
 
-def export_newest(conn) -> int:
+def export_newest(conn: Connection) -> int:
     logs = conn.list_trackpoint_logs()
     if not logs:
         print("Error: no logs on device.", file=sys.stderr)

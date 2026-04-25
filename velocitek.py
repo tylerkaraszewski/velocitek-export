@@ -335,9 +335,8 @@ class Connection:
         """Download trackpoints between start and end (inclusive) via the
         'T' command. on_progress(count) is called periodically."""
         parameter = encode_pic_date(start) + encode_pic_date(end)
-        cb = None
-        if on_progress is not None:
-            def cb(_body, count):
+        def cb(_body, count):
+            if on_progress is not None:
                 on_progress(count)
         bodies = self.run_list_command(
             signal=ord("T"),

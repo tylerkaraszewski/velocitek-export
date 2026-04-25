@@ -6,9 +6,6 @@ a per-point <time>. Speed/heading are not part of standard GPX; the Mac app
 drops them on the way out, and so do we.
 """
 
-from __future__ import annotations
-
-from typing import Iterable
 import xml.etree.ElementTree as ET
 
 from velocitek import Trackpoint
@@ -21,8 +18,7 @@ def _iso8601_z(ts) -> str:
     return ts.strftime("%Y-%m-%dT%H:%M:%S.") + f"{ts.microsecond // 1000:03d}Z"
 
 
-def write_gpx(path: str, points: Iterable[Trackpoint], name: str = "Track") -> int:
-    points = list(points)
+def write_gpx(path: str, points: list[Trackpoint], name: str = "Track") -> int:
     if not points:
         raise ValueError("refusing to write empty GPX")
 
